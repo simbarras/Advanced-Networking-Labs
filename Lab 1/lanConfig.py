@@ -18,36 +18,59 @@ def firstNetwork():
     net.addController( 'c0' )
 
     info( '*** Adding hosts\n' )
-    PC1 = net.addHost( 'PC1', ip='10.10.10.1/24')
-    PC2 = net.addHost( 'PC2', ip='10.10.20.2/24')
-    PC3 = net.addHost( 'PC3', ip='10.10.30.3/24')
-    PC4 = net.addHost( 'PC4', ip='10.10.10.4/24')
-
-
+    PC1 = net.addHost( 'PC1', mac='42:79:77:3d:8f:10') #pc1-eth0
+    PC2 = net.addHost( 'PC2', mac='42:79:77:3d:8f:20') #pc2-eth0
+    PC3 = net.addHost( 'PC3', mac='42:79:77:3d:8f:10') #pc3-eth0
+    PC4 = net.addHost( 'PC4')
+    
     info( '*** Adding switch\n' )
     s14 = net.addSwitch( 's14' )
     s24 = net.addSwitch( 's24' )
     s34 = net.addSwitch( 's34' )
-
+    
     info( '*** Creating links\n' )
-    net.addLink( PC1, s14 )
-    net.addLink( PC4, s14 )
-
-    net.addLink( PC2, s24 )
-    net.addLink( PC4, s24 )
-
-    net.addLink( PC3, s34 )
-    net.addLink( PC4, s34 )
-
-    PC4.cmd('ip addr add 10.10.20.4/24 dev PC4-eth1')
-    PC4.cmd('ip addr add 10.10.30.4/24 dev PC4-eth2')
-    PC4.cmd('echo 1 > /proc/sys/net/ipv4/ip_forward')
-
+    net.addLink( PC1, s14)
+    net.addLink( PC4, s14)
+    net.addLink( PC2, s24)
+    net.addLink( PC4, s24)
+    net.addLink( PC3, s34)
+    net.addLink( PC4, s34)
+    
+    PC4.setMAC('42:79:77:3d:8f:40', intf='PC4-eth0')
+    PC4.setMAC('42:79:77:3d:8f:41', intf='PC4-eth1')
+    PC4.setMAC('42:79:77:3d:8f:42', intf='PC4-eth2')
+    
     info( '*** Starting network\n')
     net.start()
-    PC1.cmd('ip route add default via 10.10.10.4')
-    PC2.cmd('ip route add default via 10.10.20.4')
-    PC3.cmd('ip route add default via 10.10.30.4')
+
+    net["PC1"].cmd("ip addr add 10.10.10.1/24 dev PC1-eth0")
+    net["PC2"].cmd("ip addr add 10.10.20.2/24 dev PC2-eth0")
+    net["PC3"].cmd("ip addr add 10.10.30.3/24 dev PC3-eth0")
+    net["PC4"].cmd("ip addr add 10.10.10.4/24 dev PC4-eth0")
+    net["PC4"].cmd("ip addr add 10.10.20.4/24 dev PC4-eth1")
+    net["PC4"].cmd("ip addr add 10.10.30.4/24 dev PC4-eth2")
+
+    net["PC1"].cmd("ip -6 addr add fd24:ec43:12ca:c001:10::1/80 dev PC1-eth0")
+    net["PC2"].cmd("ip -6 addr add fd24:ec43:12ca:c001:20::2/80 dev PC2-eth0")
+    net["PC3"].cmd("ip -6 addr add fd24:ec43:12ca:c001:30::3/80 dev PC3-eth0")
+    net["PC4"].cmd("ip -6 addr add fd24:ec43:12ca:c001:10::4/80 dev PC4-eth0")
+    net["PC4"].cmd("ip -6 addr add fd24:ec43:12ca:c001:20::4/80 dev PC4-eth1")
+    net["PC4"].cmd("ip -6 addr add fd24:ec43:12ca:c001:30::4/80 dev PC4-eth2")
+
+    net["PC1"].cmd("ip addr del 10.0.0.1/8 dev PC1-eth0")
+    net["PC2"].cmd("ip addr del 10.0.0.2/8 dev PC2-eth0")
+    net["PC3"].cmd("ip addr del 10.0.0.3/8 dev PC3-eth0")
+    net["PC4"].cmd("ip addr del 10.0.0.4/8 dev PC4-eth0")
+
+    net["PC1"].cmd("ip route add default via 10.10.10.4")
+    net["PC1"].cmd("ip -6 route add default via fd24:ec43:12ca:c001:10::4")
+    net["PC2"].cmd("ip route add default via 10.10.20.4")
+    net["PC2"].cmd("ip -6 route add default via fd24:ec43:12ca:c001:20::4")
+    net["PC3"].cmd("ip route add default via 10.10.30.4")
+    net["PC3"].cmd("ip -6 route add default via fd24:ec43:12ca:c001:30::4")
+
+    net["PC4"].cmd("echo 1 > /proc/sys/net/ipv4/ip_forward")
+    net["PC4"].cmd("echo 1 > /proc/sys/net/ipv6/conf/all/forwarding")
 
     "This is used to run commands on the hosts"
 
@@ -61,6 +84,7 @@ def firstNetwork():
   'Ctrl Shift <Key>V: insert-selection(CLIPBOARD)\\n'
   'Shift <Key>Insert: insert-selection(CLIPBOARD)" '
   '-T PC1 &'
+  'sudo wireshark -i PC1-eth0 -k &'
 )
     PC2.cmd(
     'xterm '
@@ -71,6 +95,7 @@ def firstNetwork():
     'Ctrl Shift <Key>V: insert-selection(CLIPBOARD)\\n'
     'Shift <Key>Insert: insert-selection(CLIPBOARD)" '
     '-T PC2 &'
+    'sudo wireshark -i PC2-eth0 -k &'
 )
     PC3.cmd(
     'xterm '
@@ -81,6 +106,7 @@ def firstNetwork():
     'Ctrl Shift <Key>V: insert-selection(CLIPBOARD)\\n'
     'Shift <Key>Insert: insert-selection(CLIPBOARD)" '
     '-T PC3 &'
+    'sudo wireshark -i PC3-eth0 -k &'
 )
     PC4.cmd(
     'xterm '
@@ -91,18 +117,18 @@ def firstNetwork():
     'Ctrl Shift <Key>V: insert-selection(CLIPBOARD)\\n'
     'Shift <Key>Insert: insert-selection(CLIPBOARD)" '
     '-T PC4 &'
+    'sudo wireshark -i any -k &'
 )
 
     info( '*** Running the command line interface\n' )
     CLI( net )
-
+	
     info( '*** Closing the terminals on the hosts\n' )
     PC1.cmd("killall xterm")
     PC2.cmd("killall xterm")
     PC3.cmd("killall xterm")
     PC4.cmd("killall xterm")
-
-
+	
     info( '*** Stopping network' )
     net.stop()
 
@@ -110,3 +136,4 @@ def firstNetwork():
 if __name__ == '__main__':
     setLogLevel( 'info' )
     firstNetwork()
+
