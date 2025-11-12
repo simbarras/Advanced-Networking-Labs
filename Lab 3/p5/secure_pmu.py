@@ -17,24 +17,24 @@ PMU_NUMBER = 10
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind(('localhost', PORT))
 sock.listen()
-print(f"Secure PMU listening on port {PORT}", flush=True)
+#print(f"Secure PMU listening on port {PORT}", flush=True)
 
 # Wrap socket with SSL
+ssl._create_default_https_context = ssl._create_unverified_context
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.verify_mode = ssl.CERT_NONE
 context.load_cert_chain(certfile=CERTFILE, keyfile=KEYFILE)
-ssl_sock = context.wrap_socket(sock, server_side=True)
 
 # Accept connections
 while True:
-    conn, addr = ssl_sock.accept()
-    print(f"Connection from {addr}", flush=True)
-    try:
-        for i in range(PMU_NUMBER):
-            print(f"Send PMU {i} data", flush=True)
-            conn.sendall(b'This is PMU ' + str(i).encode('utf-8'))
-        conn.sendall(b'')
-    except Exception as e:
-        print(f"Error: {e}", flush=True)
-    finally:
+    with context.wrap_socket(sock, server_side=True) as ssl_sock:
+        conn, addr = ssl_sock.accept()
+        if conn.recv(1024) == b"CMD_short:0":
+            for i in range(PMU_NUMBER):
+                data_str = f"This is PMU data {i}"
+                print(data_str, flush=True)
+                conn.sendall(data_str.encode())
+        else:
+            print("Invalid command received.", flush=True)
         conn.close()
-        print(f"Connection from {addr} closed", flush=True)
+        break

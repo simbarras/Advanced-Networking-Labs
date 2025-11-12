@@ -1,19 +1,16 @@
 # UDP client using IPv4 and IPv6
-# usage: python3 PDC.py <server> <port> <command>
+# usage: python3 PDC.py <server> <port>
 import socket
 import sys
 import select
 
-# Constants
-PROBABILITY_LOSS = 0.5
-
 # Args
-if len(sys.argv) != 4:
-    print('usage: %s <server> <port> <command>' % sys.argv[0])
+if len(sys.argv) != 3:
+    print('usage: %s <server> <port>' % sys.argv[0], flush=True)
     sys.exit(1)
 HOST = sys.argv[1]
 PORT = int(sys.argv[2])
-command = sys.argv[3]
+command = "RESET:20"
 TIMEOUT_S = 1.0
 
 # Resolve one destination per family (IPv4 + IPv6 if available)
@@ -23,7 +20,7 @@ for fam, st, pr, cn, sa in socket.getaddrinfo(HOST, PORT, 0, socket.SOCK_DGRAM):
         targets[fam] = sa
 
 if not targets:
-    print("Could not resolve any UDP address for the server.")
+    print("Could not resolve any UDP address for the server.", flush=True)
     sys.exit(2)
 
 # Create one socket per resolved family; don't bind() for a client
@@ -40,12 +37,12 @@ try:
         # Send the command to all resolved addresses (IPv4 and/or IPv6)
         for s, addr in sockets:
             s.sendto(command.encode(), addr)
-        print(f"[attempt {attempt}] sent to: {', '.join(str(a) for _, a in sockets)}")
+        print(f"[attempt {attempt}] sent to: {', '.join(str(a) for _, a in sockets)}", flush=True)
 
         # Wait up to TIMEOUT_S for any reply
         rlist, _, _ = select.select([s for s, _ in sockets], [], [], TIMEOUT_S)
         if not rlist:
-            print("timeout: no response — retransmitting…")
+            print("timeout: no response — retransmitting…", flush=True)
             continue
 
         # Read first available reply and exit
@@ -54,7 +51,7 @@ try:
                 data, addr = rs.recvfrom(4096)
             except BlockingIOError:
                 continue
-            print(f"received from {addr}: {data.decode('utf-8', 'replace')}")
+            print(f"received from {addr}: {data.decode('utf-8', 'replace')}", flush=True)
             sys.exit(0)
 finally:
     for s, _ in sockets:

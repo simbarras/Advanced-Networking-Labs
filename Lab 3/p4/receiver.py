@@ -6,7 +6,7 @@ import sys
 
 # Argument check
 if len(sys.argv) != 3:
-    print(f"Usage: {sys.argv[0]} <multicast_group> <port>")
+    print(f"Usage: {sys.argv[0]} <multicast_group> <port>", flush=True)
     sys.exit(1)
 
 MCAST_GRP = sys.argv[1]
@@ -32,7 +32,7 @@ mreq = struct.pack("=4s4s",
                    socket.inet_aton("0.0.0.0"))
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
-print(f"Listening for multicast messages on {MCAST_GRP}:{MCAST_PORT}")
+print(f"Listening for multicast messages on {MCAST_GRP}:{MCAST_PORT}", flush=True)
 
 # Receive loop
 try:
@@ -40,8 +40,8 @@ try:
         data, addr = sock.recvfrom(1024)
         if not data:
             continue
-        print(f"{addr}: {data.decode(errors='replace').strip()}")
+        print(f"{addr}: {data.decode(errors='replace').strip()}", flush=True)
 except KeyboardInterrupt:
-    print("\nExiting.")
+    print("\nExiting.", flush=True)
 finally:
     sock.close()
